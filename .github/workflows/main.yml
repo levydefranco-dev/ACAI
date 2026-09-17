@@ -26,17 +26,42 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Verificar estrutura
+        run: |
+          echo "=== Conteúdo da raiz ==="
+          ls -la
+          echo ""
+          echo "=== Procurando pubspec.yaml ==="
+          find . -name "pubspec.yaml" | head -5
+
       - name: Flutter doctor
         run: flutter doctor -v
 
       - name: Get dependencies
-        run: flutter pub get
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            flutter pub get
+          elif [ -f "acai_full/pubspec.yaml" ]; then
+            cd acai_full
+            flutter pub get
+          else
+            echo "ERRO: pubspec.yaml não encontrado!"
+            exit 1
+          fi
 
-      - name: Build APK (release)
-        run: flutter build apk --release
+      - name: Build APK
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            flutter build apk --release
+          else
+            cd acai_full
+            flutter build apk --release
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: acai-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            acai_full/build/app/outputs/flutter-apk/app-release.apk
